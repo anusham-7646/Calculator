@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MongoDB.Driver;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,7 @@ namespace Calculator
         public double lastnumber, result,newnumber;
         public Selectedoperator? selectedoperator,firstoperator=null,secondoperator=null;
         public bool temp=false,check=false,sample=false;
+        private simp simp;
         
         public MainWindow()
         {
@@ -31,6 +33,7 @@ namespace Calculator
             negbutton.Click += Negbutton_Click;
             perbutton.Click += Perbutton_Click;
             equalbutton.Click += Equalbutton_Click;
+            simp = new();
         }
 
         private void Equalbutton_Click(object sender, RoutedEventArgs e)
@@ -119,7 +122,7 @@ namespace Calculator
 
         private void operation_Click(object sender, RoutedEventArgs e)
         {
-            
+           
             if (check == false)
             {
                 if (double.TryParse(resultlabel.Content.ToString(), out lastnumber))
@@ -217,15 +220,34 @@ namespace Calculator
     public class simp
     {
       
-        public static double sum(double n1,double n2)
+        public double sum(double n1,double n2)
         {
+            var db = new OperationDb
+            {
+                Number1 = n1,
+                Number2 = n2,
+                Operator = "+",
+                Result = n1 + n2,
+                CreatedOn = DateTime.Now
+            };
+            Insert2Db(db, "Additions");
             return n1 + n2;
         }
-        public static double sub(double n1, double n2)
+        public double sub(double n1, double n2)
         {
+            var db = new OperationDb
+            {
+                Number1 = n1,
+                Number2 = n2,
+                Operator = "-",
+                Result = n1 - n2,
+                CreatedOn = DateTime.Now
+            };
+            Insert2Db(db, "Subtractions");
+            
             return n1 - n2;
         }
-        public static double div(double n1, double n2)
+        public double div(double n1, double n2)
         {
             if (n2 == 0)
             {
@@ -233,13 +255,52 @@ namespace Calculator
                 return 0;
             }
             else
-            { 
+            {
+                var db = new OperationDb
+                {
+                    Number1 = n1,
+                    Number2 = n2,
+                    Operator = "/",
+                    Result = n1 / n2,
+                    CreatedOn = DateTime.Now
+                };
+                Insert2Db(db, "Divisions");
                 return n1 / n2;
             }
         }
-        public static double mul(double n1, double n2)
+        public double mul(double n1, double n2)
         {
+            var db = new OperationDb
+            {
+                Number1 = n1,
+                Number2 = n2,
+                Operator = "*",
+                Result = n1 * n2,
+                CreatedOn = DateTime.Now
+            };
+            Insert2Db(db, "Multiplications");
             return n1 *n2;
+        }
+
+        const string MongoDBConnectionString = "mongodb://localhost";
+
+        public IMongoCollection<OperationDb> GetCollections(string collectionName)
+        {
+            var client = new MongoClient(MongoDBConnectionString);
+            var database = client.GetDatabase("Calculator");
+            return database.GetCollection<OperationDb>(collectionName);
+
+        }
+
+        private void Insert2Db(OperationDb operationDb, string collectionName)
+        {
+            var collections = GetCollections(collectionName);
+            collections.InsertOne(operationDb);
         }
     }
 }
+
+
+
+
+
